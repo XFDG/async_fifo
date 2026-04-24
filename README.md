@@ -1,3 +1,14 @@
+# Async FIFO Reproduction
+
+This repository is a course reproduction and documentation fork of
+[`dpretet/async_fifo`](https://github.com/dpretet/async_fifo).
+
+- Chinese README: [README.zh-CN.md](README.zh-CN.md)
+- English README: [README.en.md](README.en.md)
+- Detailed reproduction and GitHub collaboration guide: [guide.md](guide.md)
+
+The original upstream README content is kept below for reference.
+
 # Asynchronous dual clock FIFO
 
 ![CI](https://github.com/dpretet/async_fifo/actions/workflows/ci.yaml/badge.svg?branch=master)
