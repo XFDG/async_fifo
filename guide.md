@@ -33,52 +33,410 @@
 
 本仓库选择 Async FIFO，理由是它规模适中、模块边界清晰、CDC 主题有深度，非常适合在有限报告和 5-8 分钟 presentation 中讲清楚。
 
-## 2. 本次本地执行记录
+## 2. Git 安装与 GitHub 协作流程
 
-本次环境：
+这一章放在前面，是因为后续所有协作都依赖 Git。没有 Git，大家只能互相传压缩包，很容易覆盖彼此修改；使用 Git 后，每个人可以在自己的分支上改文档、画图或补分析，再通过 Pull Request 合并。
 
-- 系统：WSL / Linux shell。
-- 当前目录：`/mnt/c/Users/ASUS/Desktop/ics6204 project`。
-- 图形界面：无。
-- 测试策略：按任务要求，本次不执行 GUI 或仿真测试，只完成复现文档和协作文件整理。
+### 2.1 Git 是什么
 
-已执行和确认的步骤：
+Git 是版本控制工具，解决三个问题：
 
-1. 确认工作目录下已经存在 `async_fifo` 仓库副本。
-2. 确认上游远程地址为 `https://github.com/dpretet/async_fifo`。
-3. 执行 `git fetch origin`，确认本地 `master` 与 `origin/master` 指向相同提交。
-4. 阅读两个 PDF 文档，确认课程要求、截止日期、报告结构和推荐选题。
-5. 阅读上游 `README.md`、`doc/specification.rst`、`doc/testplan.rst`。
-6. 阅读核心 RTL：`async_fifo.v`、`wptr_full.v`、`rptr_empty.v`、`sync_r2w.v`、`sync_w2r.v`、`fifomem.v`。
-7. 阅读扩展 RTL：`async_bidir_fifo.v`、`async_bidir_ramif_fifo.v`。
-8. 阅读验证和流程文件：`sim/async_fifo_unit_test.sv`、`sim/Makefile`、`flow.sh`、`.github/workflows/ci.yaml`、`syn/fifo.ys`。
-9. 新增本复现项目文档：`guide.md`、`README.zh-CN.md`、`README.en.md`。
-10. 新增 `.gitattributes`，降低 Windows/WSL 换行符导致的 Git 伪修改风险。
-11. 更新根目录 `README.md`，加入本复现项目入口链接。
-12. 完成本地 Git 提交：
-    - `a09ab27 docs: add reproduction guide and bilingual readmes`
-    - `d5c7f91 docs: link reproduction documentation from readme`
-13. 添加远程 `xfdg = git@github.com:XFDG/async_fifo.git` 并尝试推送。
-14. 推送失败，GitHub 返回 `ERROR: Repository not found.`；已确认 SSH 能认证到 `XFDG`，失败原因是 GitHub 上尚未创建 `XFDG/async_fifo` 仓库。
+- 记录每一次修改，方便回看历史。
+- 允许多人并行开发，降低互相覆盖文件的风险。
+- 通过 GitHub 把本地仓库同步到云端，方便协作、review 和备份。
 
-注意：工作区中原始文件可能显示大量 `M`，主要由 CRLF/LF 换行差异引起。判断时可使用：
+几个基本概念：
+
+| 概念 | 含义 |
+| --- | --- |
+| repository / repo | 一个 Git 仓库，也就是一个被 Git 管理的项目目录 |
+| commit | 一次明确的修改记录，建议每个 commit 只做一类事情 |
+| branch | 分支，用来隔离不同任务，例如报告、图、验证记录 |
+| remote | 远程仓库，例如 GitHub 上的 `XFDG/async_fifo` |
+| push | 把本地 commit 上传到远程仓库 |
+| pull | 从远程仓库拉取别人已经上传的修改 |
+| Pull Request / PR | 在 GitHub 上请求把一个分支合并到主分支 |
+
+### 2.2 Windows 安装 Git
+
+如果同学使用 Windows，推荐安装 Git for Windows：
+
+1. 打开 https://git-scm.com/download/win。
+2. 下载 64-bit Git for Windows installer。
+3. 双击安装。
+4. 安装组件保持默认即可，确保包含 Git Bash。
+5. Editor 可选择 VS Code；如果不确定，默认 Vim 也可以，但新手不太友好。
+6. PATH 选项选择 `Git from the command line and also from 3rd-party software`。
+7. SSH 选项选择 `Use bundled OpenSSH`。
+8. Line ending 选项建议选择 `Checkout as-is, commit Unix-style line endings`；如果已经装完，也可以后面用命令配置。
+9. 安装完成后，打开 Git Bash 或 PowerShell，检查版本：
 
 ```bash
-git diff --ignore-cr-at-eol
-git diff --numstat --ignore-cr-at-eol
+git --version
 ```
 
-如果这些命令没有实际输出，说明内容层面没有有效修改。不要随意执行 `git reset --hard`，除非你确认没有任何需要保留的本地修改。
+如果能看到类似 `git version 2.xx.x`，说明安装成功。
+
+### 2.3 WSL / Ubuntu 安装 Git
+
+如果同学使用 WSL 或 Ubuntu：
+
+```bash
+sudo apt update
+sudo apt install -y git
+git --version
+```
+
+本项目在 WSL 下操作时，建议进入 Linux 路径或 `/mnt/c/...` 项目路径后再运行 Git 命令。Windows 和 WSL 共用同一个目录时，最常见问题是换行符变化，所以本仓库已经加入 `.gitattributes` 来固定常见源码和文档文件为 LF。
+
+### 2.4 第一次使用 Git 的全局配置
+
+每位同学第一次使用 Git 时，都应该配置自己的名字和邮箱。这个信息会出现在 commit 记录里。
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your_email@example.com"
+```
+
+检查配置：
+
+```bash
+git config --global --list
+```
+
+建议再设置换行符，减少 Windows/WSL 伪修改：
+
+```bash
+git config --global core.autocrlf false
+git config --global core.safecrlf warn
+```
+
+如果使用 VS Code，可以设置默认编辑器：
+
+```bash
+git config --global core.editor "code --wait"
+```
+
+### 2.5 配置 GitHub SSH Key
+
+推荐用 SSH 方式连接 GitHub，这样 push 时不需要每次输入账号密码。
+
+生成 SSH key：
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+一路回车即可。默认会生成：
+
+```text
+~/.ssh/id_ed25519
+~/.ssh/id_ed25519.pub
+```
+
+查看公钥内容：
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+把输出的整行内容复制到 GitHub：
+
+1. 打开 GitHub。
+2. 点击头像。
+3. 进入 `Settings`。
+4. 左侧选择 `SSH and GPG keys`。
+5. 点击 `New SSH key`。
+6. Title 填电脑名，例如 `Laptop WSL`。
+7. Key 粘贴 `id_ed25519.pub` 的内容。
+8. 点击 `Add SSH key`。
+
+测试 SSH：
+
+```bash
+ssh -T git@github.com
+```
+
+如果看到类似下面的信息，说明认证成功：
+
+```text
+Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+### 2.6 获取本项目仓库
+
+如果团队仓库已经创建，最推荐直接克隆团队仓库：
+
+```bash
+git clone git@github.com:XFDG/async_fifo.git
+cd async_fifo
+```
+
+如果你先从上游原项目开始：
+
+```bash
+git clone https://github.com/dpretet/async_fifo.git
+cd async_fifo
+git remote rename origin upstream
+git remote add origin git@github.com:XFDG/async_fifo.git
+```
+
+检查远程仓库：
+
+```bash
+git remote -v
+```
+
+推荐含义：
+
+- `origin`：团队自己的仓库，通常是 `git@github.com:XFDG/async_fifo.git`。
+- `upstream`：原作者仓库，通常是 `https://github.com/dpretet/async_fifo.git`。
+
+如果当前仓库使用 `xfdg` 作为团队远程名，也可以继续使用：
+
+```bash
+git remote add xfdg git@github.com:XFDG/async_fifo.git
+git push -u xfdg master
+```
+
+### 2.7 每天开始工作前先同步
+
+开始改文件前先拉取远程更新：
+
+```bash
+git checkout master
+git pull
+```
+
+如果团队远程叫 `xfdg`：
+
+```bash
+git checkout master
+git pull xfdg master
+```
+
+这样可以减少你和同学改到同一份旧文件后产生冲突。
+
+### 2.8 使用分支完成任务
+
+不要所有人都直接改 `master`。每个任务建一个分支：
+
+```bash
+git checkout -b docs/report-outline
+```
+
+分支命名建议：
+
+| 分支名 | 用途 |
+| --- | --- |
+| `docs/report-outline` | 报告大纲 |
+| `docs/module-diagram` | 模块图和图示 |
+| `analysis/micro-architecture` | 微架构分析 |
+| `analysis/findings` | findings 整理 |
+| `verification/sim-notes` | 仿真和测试记录 |
+| `slides/presentation` | PPT 和讲稿 |
+
+查看当前分支：
+
+```bash
+git branch
+git status --short --branch
+```
+
+### 2.9 修改、暂存和提交
+
+查看改了哪些文件：
+
+```bash
+git status --short
+git diff
+```
+
+把需要提交的文件加入暂存区：
+
+```bash
+git add guide.md README.md
+```
+
+提交：
+
+```bash
+git commit -m "docs: update git collaboration guide"
+```
+
+提交信息建议格式：
+
+```text
+<type>: <short description>
+```
+
+常用 type：
+
+| type | 场景 |
+| --- | --- |
+| `docs` | 文档、报告、README、guide |
+| `rtl` | RTL 代码修改 |
+| `sim` | 仿真或 testbench 修改 |
+| `syn` | 综合脚本修改 |
+| `chore` | 仓库配置、格式、杂项 |
+
+好的 commit 示例：
+
+```bash
+git commit -m "docs: add async fifo module diagram notes"
+git commit -m "docs: refine findings section"
+git commit -m "sim: document existing unit tests"
+```
+
+不推荐的 commit：
+
+```bash
+git commit -m "update"
+git commit -m "fix"
+git commit -m "final final version"
+```
+
+### 2.10 推送到 GitHub
+
+第一次推送当前分支：
+
+```bash
+git push -u origin docs/report-outline
+```
+
+如果团队远程叫 `xfdg`：
+
+```bash
+git push -u xfdg docs/report-outline
+```
+
+之后同一分支继续推送：
+
+```bash
+git push
+```
+
+如果推送 `master`：
+
+```bash
+git push origin master
+```
+
+### 2.11 创建 Pull Request
+
+推荐所有协作者都通过 PR 合并：
+
+1. 把分支 push 到 GitHub。
+2. 打开仓库页面 `https://github.com/XFDG/async_fifo`。
+3. GitHub 通常会提示 `Compare & pull request`。
+4. Base 选择 `master`，Compare 选择你的任务分支。
+5. 写清楚本次修改内容。
+6. 至少请一名同学 review。
+7. 解决评论后再 merge。
+
+PR 描述模板：
+
+```markdown
+## Summary
+- Added/updated ...
+
+## Scope
+- Report section:
+- RTL files referenced:
+- Diagrams affected:
+
+## Checks
+- [ ] Markdown reviewed
+- [ ] Links checked
+- [ ] No unrelated RTL changes
+```
+
+### 2.12 Issue 拆分任务
+
+建议在 GitHub Issues 中拆任务：
+
+- `report: project overview`
+- `diagram: async_fifo top-level module graph`
+- `analysis: Gray code pointer and full/empty logic`
+- `analysis: code walk-through`
+- `slides: 5-8 min presentation`
+- `verification: optional sim/lint notes`
+
+每个 issue 写清楚：
+
+- 目标是什么。
+- 输出文件是什么。
+- 参考哪些 RTL 文件。
+- 截止时间。
+
+### 2.13 处理冲突
+
+如果 `git pull` 或 PR 显示 conflict，不要慌，通常是两个人改了同一个文件相近位置。
+
+基本处理流程：
+
+```bash
+git status
+```
+
+打开冲突文件，找到类似标记：
+
+```text
+  <<<<<<< HEAD
+当前分支内容
+  =======
+另一个分支内容
+  >>>>>>> branch-name
+```
+
+手动改成最终想保留的版本，然后：
+
+```bash
+git add <conflict-file>
+git commit
+git push
+```
+
+如果不确定应该保留谁的内容，先在群里问，不要盲目删除。
+
+### 2.14 协作注意事项
+
+- 不要提交仿真生成的 `.vcd`、`.vvp`、`.out` 等临时文件。
+- 不要因为换行符变化提交全仓库大 diff。
+- 如果只写报告，尽量只改 Markdown、图片和文档。
+- 如果修改 RTL，必须说明为什么改，并补充验证记录。
+- 不要随意运行 `git reset --hard`，它会丢掉本地未提交修改。
+- 不要随意强推 `git push --force`，除非全组明确知道影响。
+- 合并上游原作者仓库前，先看 diff，避免引入不理解的变化。
+
+### 2.15 与上游原项目同步
+
+如果以后想同步 `dpretet/async_fifo` 的更新：
+
+```bash
+git fetch upstream
+git checkout master
+git merge upstream/master
+git push origin master
+```
+
+如果只想查看上游多了什么：
+
+```bash
+git fetch upstream
+git log --oneline master..upstream/master
+git diff master..upstream/master --stat
+```
 
 ## 3. 从零复现步骤
 
 如果其他同学从空目录开始，可以按以下步骤复现。
 
-### 3.1 安装基础工具
+### 3.1 准备基础工具
 
 最低要求：
 
-- Git。
+- Git，安装和配置见第 2 章。
 - 文本编辑器，如 VS Code。
 - Bash/WSL/Ubuntu shell。
 
@@ -94,31 +452,35 @@ Ubuntu/WSL 可参考：
 
 ```bash
 sudo apt update
-sudo apt install -y git make iverilog verilator yosys
+sudo apt install -y make iverilog verilator yosys
 ```
 
 本次任务没有运行测试，因此这些工具不是当前文档交付的硬性前置条件。
 
-### 3.2 克隆上游仓库
+### 3.2 克隆团队仓库或上游仓库
 
-建议固定 LF 换行，避免 Windows/WSL 协作时出现全仓库伪修改：
+如果团队仓库已经可用，直接克隆团队仓库：
 
 ```bash
-git config --global core.autocrlf false
+git clone git@github.com:XFDG/async_fifo.git
+cd async_fifo
+```
+
+如果只是复现上游原始项目，也可以克隆原作者仓库：
+
+```bash
 git clone https://github.com/dpretet/async_fifo.git
 cd async_fifo
 ```
 
-如果已经有本地仓库，更新上游即可：
+如果已经有本地仓库，进入目录后先看远程和状态：
 
 ```bash
-cd async_fifo
 git remote -v
-git fetch origin
 git status --short --branch
 ```
 
-期望看到本地分支与 `origin/master` 对齐。
+团队协作时，远程仓库配置和推送规则以第 2 章为准。
 
 ### 3.3 建议的阅读顺序
 
@@ -162,8 +524,10 @@ async_fifo
 │   ├── fifo.ys                     # Yosys 综合脚本
 │   └── syn_asic.sh                 # 综合执行脚本
 ├── flow.sh                         # lint/sim/syn 统一命令入口
-├── README.zh-CN.md                 # 本复现项目中文说明
+├── README.md                       # 中文主 README
+├── README.zh-CN.md                 # 中文 README 备份
 ├── README.en.md                    # 本复现项目英文说明
+├── README.upstream.md              # 上游原始 README
 └── guide.md                        # 本指南
 ```
 
@@ -538,197 +902,7 @@ end
 
 不要把 presentation 做成逐行代码朗读。重点是让听众看懂结构和设计取舍。
 
-## 8. GitHub 发布和协作流程
-
-目标是把复现仓库发布到 `https://github.com/XFDG` 下作为公开仓库。建议仓库名使用：
-
-```text
-async_fifo
-```
-
-如果这个名字已被占用，可以使用：
-
-```text
-async-fifo-reproduction
-```
-
-### 8.1 创建 GitHub 仓库
-
-方式 A：网页创建。
-
-1. 打开 https://github.com/new。
-2. Owner 选择 `XFDG`。
-3. Repository name 填 `async_fifo`。
-4. Visibility 选择 Public。
-5. 不要勾选 Initialize this repository with README。
-6. 不要添加 `.gitignore`。
-7. 不要添加 license，因为本地仓库已经有上游许可证。
-8. 点击 Create repository。
-
-方式 B：GitHub CLI。
-
-如果安装并登录了 `gh`：
-
-```bash
-gh auth status
-gh repo create XFDG/async_fifo \
-  --public \
-  --description "Reproduction and technical analysis of dpretet/async_fifo for ICS6204/MCE5913 final project" \
-  --source=. \
-  --remote=xfdg \
-  --push
-```
-
-当前环境没有检测到 `gh` 命令，但 SSH 已能认证到 `XFDG`。因此如果网页先创建好仓库，本地可直接用 SSH 推送。
-
-### 8.2 设置远程仓库
-
-推荐保留上游 `dpretet/async_fifo`，并额外添加自己的 GitHub remote：
-
-```bash
-git remote -v
-git remote rename origin upstream
-git remote add origin git@github.com:XFDG/async_fifo.git
-git remote -v
-```
-
-如果不想重命名，也可以保留 `origin` 指向上游，新增 `xfdg`：
-
-```bash
-git remote add xfdg git@github.com:XFDG/async_fifo.git
-```
-
-建议协作时采用第一种：`upstream` 表示原作者仓库，`origin` 表示团队自己的仓库。
-
-### 8.3 首次推送
-
-仓库创建后执行：
-
-```bash
-git status --short
-git add .gitattributes guide.md README.zh-CN.md README.en.md
-git commit -m "docs: add reproduction guide and bilingual readmes"
-git push -u origin master
-```
-
-如果你使用的是 `xfdg` remote：
-
-```bash
-git push -u xfdg master
-```
-
-如果出现：
-
-```text
-ERROR: Repository not found.
-```
-
-通常说明 GitHub 上还没有创建该仓库，或者当前 SSH key 没有访问权限。
-
-### 8.4 推荐分支策略
-
-主分支：
-
-- `master` 或 `main`：稳定版本，能代表当前报告/展示可用状态。
-
-功能分支：
-
-- `docs/report-outline`：报告大纲。
-- `docs/module-diagram`：模块图和图示。
-- `analysis/micro-architecture`：微架构分析。
-- `analysis/findings`：findings 整理。
-- `verification/sim-notes`：仿真和测试记录。
-
-创建分支：
-
-```bash
-git checkout -b docs/report-outline
-```
-
-提交：
-
-```bash
-git add <files>
-git commit -m "docs: add final report outline"
-git push -u origin docs/report-outline
-```
-
-### 8.5 Pull Request 流程
-
-建议所有协作者都通过 PR 合入：
-
-1. 从最新 `master` 创建分支。
-2. 在分支上修改文档、图或分析。
-3. 本地检查 Markdown。
-4. push 到 GitHub。
-5. 创建 Pull Request。
-6. 至少一名同学 review。
-7. 解决评论后合并。
-
-PR 描述建议包括：
-
-```markdown
-## Summary
-- Added/updated ...
-
-## Scope
-- Report section:
-- RTL files referenced:
-- Diagrams affected:
-
-## Checks
-- [ ] Markdown reviewed
-- [ ] Links checked
-- [ ] No unrelated RTL changes
-```
-
-### 8.6 Issue 协作建议
-
-可以在 GitHub Issues 中拆任务：
-
-- `report: project overview`
-- `diagram: async_fifo top-level module graph`
-- `analysis: Gray code pointer and full/empty logic`
-- `analysis: code walk-through`
-- `slides: 5-8 min presentation`
-- `verification: optional sim/lint notes`
-
-每个 issue 写清楚：
-
-- 目标是什么。
-- 输出文件是什么。
-- 参考哪些 RTL 文件。
-- 截止时间。
-
-### 8.7 与上游同步
-
-如果原作者仓库后续更新：
-
-```bash
-git fetch upstream
-git checkout master
-git merge upstream/master
-git push origin master
-```
-
-如果只想查看差异：
-
-```bash
-git fetch upstream
-git log --oneline master..upstream/master
-git diff master..upstream/master --stat
-```
-
-### 8.8 协作中的注意事项
-
-- 不要把仿真生成的 `.vcd`、`.vvp`、`.out` 等文件提交。
-- 不要无意修改 RTL 换行符后提交全仓库大 diff。
-- 如果只写报告，尽量只改 Markdown、图片和文档。
-- 如果修改 RTL，必须说明动机，并补充验证记录。
-- 保留原作者 copyright 和 license。
-- 中文报告和英文 README 可并存，但最终课程提交 PDF 应按课程命名规则导出。
-
-## 9. 后续开发建议
+## 8. 后续开发建议
 
 短期优先级：
 
@@ -745,12 +919,37 @@ git diff master..upstream/master --stat
 - `doc/presentation_outline.zh-CN.md`：展示讲稿。
 - `doc/findings.md`：观察和改进点。
 
-## 10. 快速命令清单
+## 9. 快速命令清单
 
-克隆：
+安装 Git，WSL / Ubuntu：
 
 ```bash
-git clone https://github.com/dpretet/async_fifo.git
+sudo apt update
+sudo apt install -y git
+git --version
+```
+
+首次配置 Git：
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your_email@example.com"
+git config --global core.autocrlf false
+git config --global core.safecrlf warn
+```
+
+配置 SSH：
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+cat ~/.ssh/id_ed25519.pub
+ssh -T git@github.com
+```
+
+克隆团队仓库：
+
+```bash
+git clone git@github.com:XFDG/async_fifo.git
 cd async_fifo
 ```
 
@@ -783,15 +982,16 @@ git remote rename origin upstream
 git remote add origin git@github.com:XFDG/async_fifo.git
 ```
 
-提交本复现文档：
+创建分支并提交：
 
 ```bash
-git add .gitattributes guide.md README.zh-CN.md README.en.md
-git commit -m "docs: add reproduction guide and bilingual readmes"
+git checkout -b docs/my-task
+git add guide.md README.md
+git commit -m "docs: update project documentation"
 ```
 
 推送：
 
 ```bash
-git push -u origin master
+git push -u origin docs/my-task
 ```

@@ -15,9 +15,11 @@ This project is a good final-project target because:
 
 ## Added Deliverables
 
-- `guide.md`: detailed reproduction guide, task analysis, architecture notes, report outline, and GitHub collaboration workflow.
-- `README.zh-CN.md`: Chinese project README.
+- `guide.md`: detailed reproduction guide, Git/GitHub onboarding workflow, task analysis, architecture notes, and report outline.
+- `README.md`: primary Chinese README.
+- `README.zh-CN.md`: Chinese README backup.
 - `README.en.md`: English project README.
+- `README.upstream.md`: upstream original README.
 - `.gitattributes`: keeps common source and documentation files on LF line endings to reduce Windows/WSL noise.
 
 ## Repository Layout
@@ -116,4 +118,3 @@ See [`guide.md`](guide.md) for the full reproduction and collaboration guide.
 ## License and Attribution
 
 This project is based on Damien Pretet's [`dpretet/async_fifo`](https://github.com/dpretet/async_fifo). Keep the original copyright and license notices. The top-level `LICENSE` is MIT, while some RTL file headers contain Apache-2.0 notices; preserve the relevant notices when reusing or modifying files.
-

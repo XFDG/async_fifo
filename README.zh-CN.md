@@ -15,9 +15,11 @@ Async FIFO 用于在两个不同时钟域之间安全传输数据。写端使用
 
 ## 当前交付物
 
-- `guide.md`：详细复现步骤、课程任务拆解、模块分析、报告写作建议、GitHub 协作流程。
-- `README.zh-CN.md`：中文项目说明。
+- `guide.md`：详细复现步骤、Git 安装与协作流程、课程任务拆解、模块分析、报告写作建议。
+- `README.md`：中文主 README。
+- `README.zh-CN.md`：中文 README 备份。
 - `README.en.md`：英文项目说明。
+- `README.upstream.md`：上游原始 README。
 - `.gitattributes`：固定常见源码和文档文件为 LF，减少 Windows/WSL 换行符导致的伪修改。
 
 ## 仓库结构
@@ -116,4 +118,3 @@ Final Project 报告建议围绕以下结构展开：
 ## 版权和致谢
 
 本项目基于 Damien Pretet 的 [`dpretet/async_fifo`](https://github.com/dpretet/async_fifo) 进行课程复现和文档整理。请保留原作者版权和许可证信息。仓库顶层 `LICENSE` 为 MIT License，部分 RTL 文件头部包含 Apache-2.0 许可证声明，使用前应按文件头和许可证要求保留声明。
-
