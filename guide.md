@@ -54,6 +54,12 @@
 8. 阅读验证和流程文件：`sim/async_fifo_unit_test.sv`、`sim/Makefile`、`flow.sh`、`.github/workflows/ci.yaml`、`syn/fifo.ys`。
 9. 新增本复现项目文档：`guide.md`、`README.zh-CN.md`、`README.en.md`。
 10. 新增 `.gitattributes`，降低 Windows/WSL 换行符导致的 Git 伪修改风险。
+11. 更新根目录 `README.md`，加入本复现项目入口链接。
+12. 完成本地 Git 提交：
+    - `a09ab27 docs: add reproduction guide and bilingual readmes`
+    - `d5c7f91 docs: link reproduction documentation from readme`
+13. 添加远程 `xfdg = git@github.com:XFDG/async_fifo.git` 并尝试推送。
+14. 推送失败，GitHub 返回 `ERROR: Repository not found.`；已确认 SSH 能认证到 `XFDG`，失败原因是 GitHub 上尚未创建 `XFDG/async_fifo` 仓库。
 
 注意：工作区中原始文件可能显示大量 `M`，主要由 CRLF/LF 换行差异引起。判断时可使用：
 
@@ -789,4 +795,3 @@ git commit -m "docs: add reproduction guide and bilingual readmes"
 ```bash
 git push -u origin master
 ```
-
